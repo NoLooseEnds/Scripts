@@ -4,7 +4,9 @@ Inspired by [this Reddit post](https://www.reddit.com/r/homelab/comments/72qust/
 
 1. Enable IPMI in iDrac
 2. Install ipmitool on linux, win or mac os
-3. Run the following command to issue IPMI commands `ipmitool -I lanplus -H <iDracip> -U root -P <rootpw> <command>`
+3. Run the following command to issue IPMI commands: 
+`ipmitool -I lanplus -H <iDracip> -U root -P <rootpw> <command>`
+
 
 **Enable manual/static fan speed:**
 
@@ -24,17 +26,20 @@ Inspired by [this Reddit post](https://www.reddit.com/r/homelab/comments/72qust/
 
 `raw 0x30 0x30 0x01 0x01`
 
+
 **Other: List all output from IPMI**
 
 `sdr elist all`
 
+
 **Example of a command:**
 `ipmitool -I lanplus -H 192.168.0.120 -U root -P calvin  raw 0x30 0x30 0x02 0xff 0x10`
+
 
 # Safety BASH script
 I made a BASH script to check the temperature, and if it's higher than XX (27 degrees C in my case) it sends a raw command to restore automatic fan control. 
 
-Script [Reddit thread](https://www.reddit.com/r/homelab/comments/779cha/manual_fan_control_on_r610r710_including_script/)
+The Scripts [Reddit thread](https://www.reddit.com/r/homelab/comments/779cha/manual_fan_control_on_r610r710_including_script/)
 
 
 *****
