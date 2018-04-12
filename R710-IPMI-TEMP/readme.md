@@ -5,9 +5,9 @@ I'm running this on an Ubuntu VM on ESXi (on the R710 box), but it should be abl
 
 I run the script via CRON every 5 minutes from my Ubuntu Server VM running on ESXi.
 
-`*/5 * * * * /bin/bash /path/to/script/R710-IPMITemp.sh && curl -fsS --retry 3 https://hchk.io/XXX-XXX-XXX > /dev/null 2>&1`
+`*/5 * * * * /bin/bash /path/to/script/R710-IPMITemp.sh > /dev/null 2>&1`
 
-Notice thate I use [healthchecks.io](https://healthchecks.io) to notify if the cron command fails (it would also trigger if the internet goes down for some reason). Remember to get your own check URL if you want it, or else just remove the curl command.
+Notice thate I use [healthchecks.io](https://healthchecks.io) in the script to notify if the temp goes to high (it would also trigger if the internet goes down for some reason). Remember to get your own check URL if you want it, or else just remove the curl command.
 
 The Scripts [Reddit thread](https://www.reddit.com/r/homelab/comments/779cha/manual_fan_control_on_r610r710_including_script/)
 
@@ -50,6 +50,7 @@ _Note: The RPM may differ from model to model_
 
 
 **Example of a command:**
+
 `ipmitool -I lanplus -H 192.168.0.120 -U root -P calvin  raw 0x30 0x30 0x02 0xff 0x10`
 
 

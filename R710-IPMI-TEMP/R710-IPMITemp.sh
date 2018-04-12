@@ -27,10 +27,12 @@ TEMP=$(ipmitool -I lanplus -H $IPMIHOST -U $IPMIUSER -P $IPMIPW sdr type tempera
 
 if [[ $TEMP > $MAXTEMP ]];
   then
-    printf "Temperature is too high! ($TEMP C) Activating dynamic fan control!" | systemd-cat -t R710-IPMI-TEMP
-    echo "Temperature is too high! ($TEMP C) Activating dynamic fan control!"
+    printf "Temperature is too high! Activating dynamic fan control! ($TEMP C)" | systemd-cat -t R710-IPMI-TEMP
+    echo "Temperature is too high! Activating dynamic fan control! ($TEMP C)"
     ipmitool -I lanplus -H $IPMIHOST -U $IPMIUSER -P $IPMIPW raw 0x30 0x30 0x01 0x01
   else
+    # healthchecks.io
+    curl -fsS --retry 3 https://hchk.io/8470021f-33f3-4a31-b2cd-741f28c47164 >/dev/null 2>&1
     printf "Temperature is OK ($TEMP C)" | systemd-cat -t R710-IPMI-TEMP
     echo "Temperature is OK ($TEMP C)"
 fi
