@@ -9,15 +9,16 @@
 # ----------------------------------------------------------------------------------
 
 
-# IPMI DEFAULT R710 SETTINGS
+# IPMI SETTINGS:
 # Modify to suit your needs.
-IPMIHOST=192.168.0.120
+# DEFAULT IP: 192.168.0.120
+IPMIHOST=10.0.100.20
 IPMIUSER=root
 IPMIPW=calvin
 
 # TEMPERATURE
 # Change this to the temperature in celcius you are comfortable with. 
-# If it goes above it will send raw IPMI command to enable dynamic fan control
+# If the temperature goes above the set degrees it will send raw IPMI command to enable dynamic fan control
 MAXTEMP=27
 
 # This variable sends a IPMI command to get the temperature, and outputs it as two digits.
