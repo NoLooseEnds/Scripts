@@ -2,7 +2,7 @@
 
 # ----------------------------------------------------------------------------------
 # Script for checking the temperature reported by the ambient temperature sensor,
-# and if deemed to high send the raw IPMI command to enable dynamic fan control.
+# and if deemed too high send the raw IPMI command to enable dynamic fan control.
 #
 # Requires:
 # ipmitool – apt-get install ipmitool

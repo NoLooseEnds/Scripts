@@ -7,7 +7,7 @@ I run the script via CRON every 5 minutes from my Ubuntu Server VM running on ES
 
 `*/5 * * * * /bin/bash /path/to/script/R710-IPMITemp.sh > /dev/null 2>&1`
 
-Notice thate I use [healthchecks.io](https://healthchecks.io) in the script to notify if the temp goes to high (it would also trigger if the internet goes down for some reason). Remember to get your own check URL if you want it, or else just remove the curl command.
+Notice that I use [healthchecks.io](https://healthchecks.io) in the script to notify if the temp goes to high (it would also trigger if the internet goes down for some reason). Remember to get your own check URL if you want it, or else just remove the curl command.
 
 I'm also currently testing out [slacktee.sh](https://github.com/course-hero/slacktee) to get notifications in my slack channel.
 
@@ -37,7 +37,7 @@ The Scripts [Reddit thread](https://www.reddit.com/r/homelab/comments/779cha/man
 
 *2160 RPM*: `raw 0x30 0x30 0x02 0xff 0x0a`
 
-*2160 RPM*: `raw 0x30 0x30 0x02 0xff 0x09`
+*1560 RPM*: `raw 0x30 0x30 0x02 0xff 0x09`
 
 _Note: The RPM may differ from model to model_
 
