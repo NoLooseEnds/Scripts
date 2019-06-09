@@ -16,6 +16,7 @@
 IPMIHOST=10.0.100.20
 IPMIUSER=root
 IPMIPW=calvin
+IPMIEK=0000000000000000000000000000000000000000
 
 # TEMPERATURE
 # Change this to the temperature in celcius you are comfortable with.
@@ -24,14 +25,14 @@ MAXTEMP=27
 
 # This variable sends a IPMI command to get the temperature, and outputs it as two digits.
 # Do not edit unless you know what you do.
-TEMP=$(ipmitool -I lanplus -H $IPMIHOST -U $IPMIUSER -P $IPMIPW sdr type temperature |grep Ambient |grep degrees |grep -Po '\d{2}' | tail -1)
+TEMP=$(ipmitool -I lanplus -H $IPMIHOST -U $IPMIUSER -P $IPMIPW -y $IPMIEK sdr type temperature |grep Ambient |grep degrees |grep -Po '\d{2}' | tail -1)
 
 
 if [[ $TEMP > $MAXTEMP ]];
   then
     printf "Warning: Temperature is too high! Activating dynamic fan control! ($TEMP C)" | systemd-cat -t R710-IPMI-TEMP
     echo "Warning: Temperature is too high! Activating dynamic fan control! ($TEMP C)" | /usr/bin/slacktee.sh -t "R710-IPMI-TEMP [$(hostname)]"
-    ipmitool -I lanplus -H $IPMIHOST -U $IPMIUSER -P $IPMIPW raw 0x30 0x30 0x01 0x01
+    ipmitool -I lanplus -H $IPMIHOST -U $IPMIUSER -P $IPMIPW -y $IPMIEK raw 0x30 0x30 0x01 0x01
   else
     # healthchecks.io
     curl -fsS --retry 3 https://hchk.io/XXX >/dev/null 2>&1
