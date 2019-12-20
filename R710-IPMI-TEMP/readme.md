@@ -1,22 +1,46 @@
-# Safety BASH script
-I made a BASH script to check the temperature, and if it's higher than XX (27 degrees C in my case) it sends a raw command to restore automatic fan control. 
+# fan speed controller for dell R710, R520 etc
 
-I'm running this on an Ubuntu VM on ESXi (on the R710 box), but it should be able to run as long as you have ipmitools. It could be you need to modify the logging, to make it work with whatever your system use.
+Dells don't like having third party cards installed, and ramp up the
+fan speed to jetliner taking off.  But you can override this.
 
-I run the script via CRON every 5 minutes from my Ubuntu Server VM running on ESXi.
+This speed controller uses ipmi raw commands that seem to be similar
+across a wide range of dell server generations (google searches for
+`ipmitool raw 0x30 0x30 0x01 0x00` show it works for R710, R730, T130,
+and I run this on my R520
 
-`*/5 * * * * /bin/bash /path/to/script/R710-IPMITemp.sh > /dev/null 2>&1`
+This script monitoring the ambient air temperature (you will likely
+need to modify the $ipmi_inlet_sensorname variable to find the correct
+sensor), the hdd temperatures, the core and socket temperatures
+(weighted so one core shooting up if all the others are still cold -
+let the heatsink do its job).
 
-Notice that I use [healthchecks.io](https://healthchecks.io) in the script to notify if the temp goes to high (it would also trigger if the internet goes down for some reason). Remember to get your own check URL if you want it, or else just remove the curl command.
+It uses setpoints and temperature ranges you can tune to your heart's
+content.  I use it to keep the fans low but increasing to a soft
+volume up to 40 degrees, ramp it up quickly to 50degrees, then very
+quickly towards full speed much beyond that.
 
-I'm also currently testing out [slacktee.sh](https://github.com/course-hero/slacktee) to get notifications in my slack channel.
+It's got a signal handler so it defaults to default behaviour when
+killed by SIGINT/SIGTERM.
+
+I run it on my proxmox hypervisor directly, hence not needing any ipmi
+passwords.  I will start and stop it through proxmox's systemd system
+once I have it firmly debugged.
+
+I wrote it the night before Australia's hottest December day on record
+(hey we like our coal fondling prime-ministers).  It seems to be
+coping so far now that it has reached that predicted peak (I don't
+believe it's only 26 in my un-air conditioned study).
+
+![Socket and ambient temperature on 20Dec2019](ipmi_temp-pinpoint=1576762993,1576823788.png)
+![Hdd temp](hddtemp_smartctl-pinpoint=1576762993,1576823788.png)
+![Core temp](sensors_temp-pinpoint=1576762993,1576823788.png)
+![Resultant Fan speed](ipmi_fans-pinpoint=1576762993,1576823788.png)
 
 
-The Scripts [Reddit thread](https://www.reddit.com/r/homelab/comments/779cha/manual_fan_control_on_r610r710_including_script/)
 
 *****
 
-# Howto: Setting the fan speed of the Dell R610/R710
+# Howto: Manually setting the fan speed of the Dell R610/R710
 
 1. Enable IPMI in iDrac
 2. Install ipmitool on linux, win or mac os
@@ -60,8 +84,6 @@ _Note: The RPM may differ from model to model_
 *****
 
 **Disclaimer**
-
-I'm by no means good at IPMI, BASH scripting or regex, etc. but it seems to work fine for me. 
 
 TLDR; I take _NO_ responsibility if you mess up anything.
 
