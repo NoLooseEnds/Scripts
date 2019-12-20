@@ -5,7 +5,10 @@ use warnings;
 use List::MoreUtils qw( apply );
 
 my $static_speed_low=0x04;
-my $static_speed_high=0x26;
+my $static_speed_high=0x26;   # this is the speed value at 100% demand
+                              # ie what we consider the point we don't
+                              # really want to get hotter but still
+                              # tolerate
 my $ipmi_inlet_sensorname="Inlet Temp";
 
 my $default_threshold=32;  # the ambient temperature we use above
@@ -106,6 +109,9 @@ sub set_fans_servo {
   if ($demand>255) {
     $demand=255;
   }
+  # ramp down the fans quickly upon lack of demand, don't ramp them up
+  # to tiny spikes of 1 fan unit.  FIXME: But should implement long
+  # term smoothing of +/- 1 fan unit
   if (!defined $lastfan or $demand < $lastfan or $demand > $lastfan + 1) {
     $lastfan = $demand;
     $demand = sprintf("0x%x", $demand);
@@ -139,6 +145,9 @@ while () {
   @coretemps = apply { s/.*:  *([^ ]*)°C.*/$1/ } @coretemps;
   @ambient_ipmitemps = apply { s/.*\| ([^ ]*) degrees C.*/$1/ } @ambient_ipmitemps;
   @hddtemps = apply { s/.*:  *([^ ]*)°C.*/$1/ } @hddtemps;
+  #FIXME: it is more important to keep hdds cool than CPUs.  We should
+  #put differnt offsets on them - possibly as easily as adding "10" to
+  #hddtemp (but need to work out how to keep log output sane)
 
   print "\n";
 
