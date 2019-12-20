@@ -17,7 +17,10 @@ let the heatsink do its job).
 It uses setpoints and temperature ranges you can tune to your heart's
 content.  I use it to keep the fans low but increasing to a soft
 volume up to 40 degrees, ramp it up quickly to 50degrees, then very
-quickly towards full speed much beyond that.
+quickly towards full speed much beyond that.  It also has an ambient
+air temperature threshold of 32degrees where it gives up and delegates
+control back to the firmware.  Don't run your bedroom IT closet at 32
+degrees yeah?
 
 It's got a signal handler so it defaults to default behaviour when
 killed by SIGINT/SIGTERM.
