@@ -16,6 +16,11 @@ The Scripts [Reddit thread](https://www.reddit.com/r/homelab/comments/779cha/man
 
 *****
 
+*ADDED 2019-12-20:*
+If you want a more advanced Perl script with more functionality, check out [@spacelama's fork](https://github.com/spacelama/Scripts).
+
+*****
+
 # Howto: Setting the fan speed of the Dell R610/R710
 
 1. Enable IPMI in iDrac
