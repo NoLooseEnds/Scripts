@@ -36,23 +36,30 @@ my $lastfan;
 sub average {
   my (@temps) = (@_);
 
-  my $div = @temps;
+  my $div = 0;
   my $tot = 0;
   for (my $i = 0; $i < @temps ; $i++) {
-    $tot += $temps[$i];
+    if (defined $temps[$i]) {
+      $tot += $temps[$i];
+      $div++;
+    }
   }
-  my $avg = sprintf "%.2f", $tot/$div;
+  my $avg=undef;
+  if ($div > 0) {
+    $avg = sprintf "%.2f", $tot/$div;
+  }
   return $avg;
 }
 
 sub max {
-  my ($v1, $v2) = (@_);
-
-  if ($v1 > $v2) {
-    return $v1;
-  } else {
-    return $v2;
+  my (@v) = (@_);
+  my $max=undef;
+  foreach my $v (@v) {
+    if (!defined $max or $v > $max) {
+      $max = $v;
+    }
   }
+  return $max;
 }
 
 sub set_fans_default {
@@ -70,12 +77,6 @@ sub set_fans_servo {
   my (@coretemps) = @$_coretemps;
   my (@hddtemps)  = @$_hddtemps;
 
-  if (!defined $current_mode or $current_mode ne "set") {
-    $current_mode="set";
-    print "--> disable dynamic fan control\n";
-    system("ipmitool raw 0x30 0x30 0x01 0x00");
-  }
-
   # two thirds weighted CPU temps vs hdd temps, but if the HDD temps
   # creep above this value, use them exclusively (more important to
   # keep them cool than the CPUs)
@@ -83,7 +84,18 @@ sub set_fans_servo {
                                   average(@cputemps), average(@coretemps), average(@hddtemps)),
                           average(@hddtemps));
 
+  if (!defined $weighted_temp) {
+    print "Error reading all temperatures! Fallback to idrac control\n";
+    set_fans_default();
+    return;
+  }
   print "weighted_temp = $weighted_temp ; ambient_temp $ambient_temp\n";
+
+  if (!defined $current_mode or $current_mode ne "set") {
+    $current_mode="set";
+    print "--> disable dynamic fan control\n";
+    system("ipmitool raw 0x30 0x30 0x01 0x00");
+  }
 
   # FIXME: probably want to take into account ambient temperature - if
   # the difference between weighted_temp and ambient_temp is small
@@ -118,10 +130,18 @@ sub set_fans_servo {
 #    print "demand = $demand\n";
     print "--> ipmitool raw 0x30 0x30 0x02 0xff $demand\n";
     system("ipmitool raw 0x30 0x30 0x02 0xff $demand");
+  } else {
+    print "demand = $demand\n";
   }
 }
 
-$SIG{TERM} = $SIG{INT} = sub { my $signame = shift ; $SIG{$signame} = 'DEFAULT' ; set_fans_default ; kill $signame, $$ };
+$SIG{TERM} = $SIG{INT} = sub { my $signame = shift ; $SIG{$signame} = 'DEFAULT' ; print "Resetting fans back to default\n"; set_fans_default ; kill $signame, $$ };
+END {
+  my $exit = $?;
+  print "Resetting fans back to default\n";
+  set_fans_default;
+  $? = $exit;
+}
 
 my $last_reset_hddtemps=time;
 my $last_reset_ambient_ipmitemps=time;
@@ -159,6 +179,7 @@ while () {
   my $ambient_temp = average(@ambient_ipmitemps);
   # FIXME: hysteresis
   if ($ambient_temp > $default_threshold) {
+    print "fallback because of high ambient temperature $ambient_temp > $default_threshold\n";
     set_fans_default();
   } else {
     set_fans_servo($ambient_temp, \@cputemps, \@coretemps, \@hddtemps);
