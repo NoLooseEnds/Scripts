@@ -185,9 +185,13 @@ while () {
     set_fans_servo($ambient_temp, \@cputemps, \@coretemps, \@hddtemps);
   }
 
+  # every 60 seconds, invalidate the cache of the slowly changing hdd
+  # temperatures to allow them to be refreshed
   if (time - $last_reset_hddtemps > 60) {
     @hddtemps=();
   }
+  # every 60 seconds, invalidate the cache of the slowly changing
+  # ambient temperatures to allow them to be refreshed
   if (time - $last_reset_ambient_ipmitemps > 60) {
     @ambient_ipmitemps=();
   }
