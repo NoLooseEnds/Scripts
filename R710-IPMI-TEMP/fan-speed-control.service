@@ -1,0 +1,11 @@
+[Unit]
+Description=Dell Poweredge Fan Control Daemon
+
+[Service]
+ExecStart=/usr/local/bin/fan-speed-control.pl
+Restart=on-failure
+Type=simple
+
+[Install]
+Alias=fan-speed-control.service
+WantedBy=multi-user.target
