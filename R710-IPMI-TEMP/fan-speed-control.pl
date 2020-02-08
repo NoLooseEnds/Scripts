@@ -3,9 +3,10 @@
 use strict;
 use warnings;
 use List::MoreUtils qw( apply );
+use File::Temp qw(tempfile);
 
-my $static_speed_low=0x04;
-my $static_speed_high=0x26;   # this is the speed value at 100% demand
+my $static_speed_low=0x03;
+my $static_speed_high=0x20;   # this is the speed value at 100% demand
                               # ie what we consider the point we don't
                               # really want to get hotter but still
                               # tolerate
@@ -33,14 +34,16 @@ my @cputemps=();
 my $current_mode;
 my $lastfan;
 
+# returns undef if there are no inputs, and ignores inputs that are
+# undef
 sub average {
-  my (@temps) = (@_);
+  my (@v) = (@_);
 
   my $div = 0;
   my $tot = 0;
-  for (my $i = 0; $i < @temps ; $i++) {
-    if (defined $temps[$i]) {
-      $tot += $temps[$i];
+  foreach my $v (@v) {
+    if (defined $v) {
+      $tot += $v;
       $div++;
     }
   }
@@ -51,12 +54,16 @@ sub average {
   return $avg;
 }
 
+# returns undef if there are no inputs, and ignores inputs that are
+# undef
 sub max {
   my (@v) = (@_);
   my $max=undef;
   foreach my $v (@v) {
-    if (!defined $max or $v > $max) {
-      $max = $v;
+    if (defined $v) {
+      if (!defined $max or $v > $max) {
+        $max = $v;
+      }
     }
   }
   return $max;
@@ -135,9 +142,12 @@ sub set_fans_servo {
   }
 }
 
-$SIG{TERM} = $SIG{INT} = sub { my $signame = shift ; $SIG{$signame} = 'DEFAULT' ; print "Resetting fans back to default\n"; set_fans_default ; kill $signame, $$ };
+my ($tempfh, $tempfilename) = tempfile("fan-speed-control.XXXXX");
+
+$SIG{TERM} = $SIG{HUP} = $SIG{INT} = sub { my $signame = shift ; $SIG{$signame} = 'DEFAULT' ; print "Resetting fans back to default\n"; set_fans_default ; kill $signame, $$ };
 END {
   my $exit = $?;
+  unlink $tempfilename;
   print "Resetting fans back to default\n";
   set_fans_default;
   $? = $exit;
@@ -147,12 +157,16 @@ my $last_reset_hddtemps=time;
 my $last_reset_ambient_ipmitemps=time;
 while () {
   if (!@hddtemps) {
-    @hddtemps=`hddtemp /dev/sd? | grep [0-9]`
+    # could just be a simple pipe, but hddtemp has a strong posibility
+    # to be stuck in a D state, and hold STDERR open despite a kill
+    # -9, so instead just send it to a tempfile, and read from that tempfile
+    system("timeout -k 1 10 hddtemp /dev/sd? > $tempfilename");
+    @hddtemps=`grep [0-9] < $tempfilename`;
   }
   if (!@ambient_ipmitemps) {
-    @ambient_ipmitemps=`ipmitool sdr type temperature | grep "$ipmi_inlet_sensorname" | grep [0-9]`
+    @ambient_ipmitemps=`timeout -k 1 10 ipmitool sdr type temperature | grep "$ipmi_inlet_sensorname" | grep [0-9]`
   }
-  @coretemps=`sensors | grep [0-9]`;
+  @coretemps=`timeout -k 1 10 sensors | grep [0-9]`;
   @cputemps=grep {/^Package id/} @coretemps;
   @coretemps=grep {/^Core/} @coretemps;
 
