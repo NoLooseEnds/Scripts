@@ -160,13 +160,13 @@ while () {
     # could just be a simple pipe, but hddtemp has a strong posibility
     # to be stuck in a D state, and hold STDERR open despite a kill
     # -9, so instead just send it to a tempfile, and read from that tempfile
-    system("timeout -k 1 10 hddtemp /dev/sd? > $tempfilename");
+    system("timeout -k 1 20 hddtemp /dev/sd? > $tempfilename");
     @hddtemps=`grep [0-9] < $tempfilename`;
   }
   if (!@ambient_ipmitemps) {
-    @ambient_ipmitemps=`timeout -k 1 10 ipmitool sdr type temperature | grep "$ipmi_inlet_sensorname" | grep [0-9]`
+    @ambient_ipmitemps=`timeout -k 1 20 ipmitool sdr type temperature | grep "$ipmi_inlet_sensorname" | grep [0-9]`
   }
-  @coretemps=`timeout -k 1 10 sensors | grep [0-9]`;
+  @coretemps=`timeout -k 1 20 sensors | grep [0-9]`;
   @cputemps=grep {/^Package id/} @coretemps;
   @coretemps=grep {/^Core/} @coretemps;
 
@@ -199,15 +199,22 @@ while () {
     set_fans_servo($ambient_temp, \@cputemps, \@coretemps, \@hddtemps);
   }
 
-  # every 60 seconds, invalidate the cache of the slowly changing hdd
-  # temperatures to allow them to be refreshed
-  if (time - $last_reset_hddtemps > 60) {
+  # every 20 minutes (enough to establish spin-down), invalidate the
+  # cache of the slowly changing hdd temperatures to allow them to be
+  # refreshed
+  if (time - $last_reset_hddtemps > 1200) {
     @hddtemps=();
+    $last_reset_hddtemps=time;
   }
   # every 60 seconds, invalidate the cache of the slowly changing
   # ambient temperatures to allow them to be refreshed
   if (time - $last_reset_ambient_ipmitemps > 60) {
     @ambient_ipmitemps=();
+    $current_mode="reset"; # just in case the RAC has rebooted, it
+                           # will go back into default control, so
+                           # make sure we set it appropriately once
+                           # per minute
+    $last_reset_ambient_ipmitemps=time;
   }
   sleep 3;
 }
