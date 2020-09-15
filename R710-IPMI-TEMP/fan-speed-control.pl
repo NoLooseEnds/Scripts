@@ -17,11 +17,11 @@ my $default_threshold=32;  # the ambient temperature we use above
                            # control the fans
 my $base_temp     = 30;    # no fans when below this temp
 my $desired_temp1 = 40;    # aim to keep the temperature below this
-my $desired_temp2 = 50;    # really ramp up fans above this
+my $desired_temp2 = 45;    # really ramp up fans above this
 my $desired_temp3 = 55;    # really ramp up fans above this
-my $demand1       = 30;    # demand at temp1
-my $demand2       = 100;   # demand at temp2
-my $demand3       = 200;   # demand at temp3
+my $demand1       = 5;     # prescaled demand at temp1
+my $demand2       = 40;    # prescaled demand at temp2
+my $demand3       = 200;   # prescaled demand at temp3
 
 # check inlet temp every minute, hddtemp every minute (but FIXME:
 # ensure doesn't spinup spundown disks), and sensors every few seconds
@@ -124,10 +124,12 @@ sub set_fans_servo {
     # y1 = demand1 ; x1 = desired_temp1 ; y2 = demand2 ; x2 = desired_temp2
     $demand = $demand1 + ($weighted_temp - $desired_temp1) * ($demand2 - $demand1)/($desired_temp2 - $desired_temp1);
   }
+  printf "demand = %0.2f", $demand;
   $demand = int($static_speed_low + $demand/100*($static_speed_high-$static_speed_low));
   if ($demand>255) {
     $demand=255;
   }
+  printf " -> %i\n", $demand;
   # ramp down the fans quickly upon lack of demand, don't ramp them up
   # to tiny spikes of 1 fan unit.  FIXME: But should implement long
   # term smoothing of +/- 1 fan unit
@@ -137,8 +139,6 @@ sub set_fans_servo {
 #    print "demand = $demand\n";
     print "--> ipmitool raw 0x30 0x30 0x02 0xff $demand\n";
     system("ipmitool raw 0x30 0x30 0x02 0xff $demand");
-  } else {
-    print "demand = $demand\n";
   }
 }
 
