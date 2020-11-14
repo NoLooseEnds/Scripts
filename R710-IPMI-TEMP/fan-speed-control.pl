@@ -155,6 +155,7 @@ END {
 
 my $last_reset_hddtemps=time;
 my $last_reset_ambient_ipmitemps=time;
+my $ambient_temp=20;
 while () {
   if (!@hddtemps) {
     # could just be a simple pipe, but hddtemp has a strong posibility
@@ -164,7 +165,7 @@ while () {
     @hddtemps=`grep [0-9] < $tempfilename`;
   }
   if (!@ambient_ipmitemps) {
-    @ambient_ipmitemps=`timeout -k 1 20 ipmitool sdr type temperature | grep "$ipmi_inlet_sensorname" | grep [0-9]`
+    @ambient_ipmitemps=`timeout -k 1 20 ipmitool sdr type temperature | grep "$ipmi_inlet_sensorname" | grep [0-9] || echo " | $ambient_temp degrees C"` # ipmitool often fails - just keep using the previous result til it succeeds
   }
   @coretemps=`timeout -k 1 20 sensors | grep [0-9]`;
   @cputemps=grep {/^Package id/} @coretemps;
@@ -190,7 +191,7 @@ while () {
   print "ambient_ipmitemps=", join (" ; ", @ambient_ipmitemps), "\n";
   print "hddtemps=", join (" ; ", @hddtemps), "\n";
 
-  my $ambient_temp = average(@ambient_ipmitemps);
+  $ambient_temp = average(@ambient_ipmitemps);
   # FIXME: hysteresis
   if ($ambient_temp > $default_threshold) {
     print "fallback because of high ambient temperature $ambient_temp > $default_threshold\n";
