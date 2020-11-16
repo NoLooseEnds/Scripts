@@ -74,8 +74,15 @@ sub set_fans_default {
     $current_mode="default";
     $lastfan=undef;
     print "--> enable dynamic fan control\n";
-    system("ipmitool raw 0x30 0x30 0x01 0x01");
+    foreach my $attempt (1..10) {
+      system("ipmitool raw 0x30 0x30 0x01 0x01") == 0 and return 1;
+      sleep 1;
+      print "  Retrying dynamic control $attempt\n";
+    }
+    print "Retries of dynamic control all failed\n";
+    return 0;
   }
+  return 1;
 }
 
 sub set_fans_servo {
@@ -101,7 +108,9 @@ sub set_fans_servo {
   if (!defined $current_mode or $current_mode ne "set") {
     $current_mode="set";
     print "--> disable dynamic fan control\n";
-    system("ipmitool raw 0x30 0x30 0x01 0x00");
+    system("ipmitool raw 0x30 0x30 0x01 0x00") == 0 or return 0;
+    # if this fails, want to return telling caller not to think weve
+    # made a change
   }
 
   # FIXME: probably want to take into account ambient temperature - if
@@ -138,8 +147,11 @@ sub set_fans_servo {
     $demand = sprintf("0x%x", $demand);
 #    print "demand = $demand\n";
     print "--> ipmitool raw 0x30 0x30 0x02 0xff $demand\n";
-    system("ipmitool raw 0x30 0x30 0x02 0xff $demand");
+    system("ipmitool raw 0x30 0x30 0x02 0xff $demand") == 0 or return 0;
+    # if this fails, want to return telling caller not to think weve
+    # made a change
   }
+  return 1;
 }
 
 my ($tempfh, $tempfilename) = tempfile("fan-speed-control.XXXXX");
@@ -195,9 +207,15 @@ while () {
   # FIXME: hysteresis
   if ($ambient_temp > $default_threshold) {
     print "fallback because of high ambient temperature $ambient_temp > $default_threshold\n";
-    set_fans_default();
+    if (!set_fans_default()) {
+      # return for next loop without resetting timers and delta change if that fails
+      next;
+    }
   } else {
-    set_fans_servo($ambient_temp, \@cputemps, \@coretemps, \@hddtemps);
+    if (!set_fans_servo($ambient_temp, \@cputemps, \@coretemps, \@hddtemps)) {
+      # return for next loop without resetting timers and delta change if that fails
+      next;
+    }
   }
 
   # every 20 minutes (enough to establish spin-down), invalidate the
