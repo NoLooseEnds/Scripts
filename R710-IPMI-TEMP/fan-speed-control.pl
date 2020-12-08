@@ -98,7 +98,7 @@ sub set_fans_servo {
                                   average(@cputemps), average(@coretemps), average(@hddtemps)),
                           average(@hddtemps));
 
-  if (!defined $weighted_temp) {
+  if (!defined $weighted_temp or $weighted_temp == 0) {
     print "Error reading all temperatures! Fallback to idrac control\n";
     set_fans_default();
     return;
