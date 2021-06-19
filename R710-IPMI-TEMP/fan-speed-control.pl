@@ -179,7 +179,7 @@ while () {
     # could just be a simple pipe, but hddtemp has a strong posibility
     # to be stuck in a D state, and hold STDERR open despite a kill
     # -9, so instead just send it to a tempfile, and read from that tempfile
-    system("timeout -k 1 20 hddtemp /dev/sd? > $tempfilename");
+    system("timeout -k 1 20 hddtemp /dev/sd? | grep -v 255 > $tempfilename");
     @hddtemps=`grep [0-9] < $tempfilename`;
   }
   if (!@ambient_ipmitemps) {
