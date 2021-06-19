@@ -5,8 +5,8 @@ use warnings;
 use List::MoreUtils qw( apply );
 use File::Temp qw(tempfile);
 
-my $static_speed_low=0x03;
-my $static_speed_high=0x20;   # this is the speed value at 100% demand
+my $static_speed_low=0x02;
+my $static_speed_high=0x12;   # this is the speed value at 100% demand
                               # ie what we consider the point we don't
                               # really want to get hotter but still
                               # tolerate
@@ -19,9 +19,15 @@ my $base_temp     = 30;    # no fans when below this temp
 my $desired_temp1 = 40;    # aim to keep the temperature below this
 my $desired_temp2 = 45;    # really ramp up fans above this
 my $desired_temp3 = 55;    # really ramp up fans above this
-my $demand1       = 5;     # prescaled demand at temp1
-my $demand2       = 40;    # prescaled demand at temp2
-my $demand3       = 200;   # prescaled demand at temp3
+my $demand1       = 5;     # prescaled (not taking into effect static_speed_low/high) demand at temp1
+my $demand2       = 40;    # prescaled (not taking into effect static_speed_low/high) demand at temp2
+my $demand3       = 200;   # prescaled (not taking into effect static_speed_low/high) demand at temp3
+
+my $hysteresis    = 2;     # don't ramp up velocity unless demand
+                           # difference is greater than this.  Ramp
+                           # down ASAP however, to bias quietness, and
+                           # thus end up removing noise changes for
+                           # just small changes in computing
 
 # check inlet temp every minute, hddtemp every minute (but FIXME:
 # ensure doesn't spinup spundown disks), and sensors every few seconds
@@ -133,7 +139,7 @@ sub set_fans_servo {
     # y1 = demand1 ; x1 = desired_temp1 ; y2 = demand2 ; x2 = desired_temp2
     $demand = $demand1 + ($weighted_temp - $desired_temp1) * ($demand2 - $demand1)/($desired_temp2 - $desired_temp1);
   }
-  printf "demand = %0.2f", $demand;
+  printf "demand(%0.2f)", $demand;
   $demand = int($static_speed_low + $demand/100*($static_speed_high-$static_speed_low));
   if ($demand>255) {
     $demand=255;
@@ -142,7 +148,7 @@ sub set_fans_servo {
   # ramp down the fans quickly upon lack of demand, don't ramp them up
   # to tiny spikes of 1 fan unit.  FIXME: But should implement long
   # term smoothing of +/- 1 fan unit
-  if (!defined $lastfan or $demand < $lastfan or $demand > $lastfan + 1) {
+  if (!defined $lastfan or $demand < $lastfan or $demand > $lastfan + $hysteresis) {
     $lastfan = $demand;
     $demand = sprintf("0x%x", $demand);
 #    print "demand = $demand\n";
