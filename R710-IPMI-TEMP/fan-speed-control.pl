@@ -40,6 +40,8 @@ my @cputemps=();
 my $current_mode;
 my $lastfan;
 
+my $print_stats = 1;
+
 # returns undef if there are no inputs, and ignores inputs that are
 # undef
 sub average {
@@ -109,7 +111,7 @@ sub set_fans_servo {
     set_fans_default();
     return;
   }
-  print "weighted_temp = $weighted_temp ; ambient_temp $ambient_temp\n";
+  print "weighted_temp = $weighted_temp ; ambient_temp $ambient_temp\n" if $print_stats;
 
   if (!defined $current_mode or $current_mode ne "set") {
     $current_mode="set";
@@ -139,12 +141,12 @@ sub set_fans_servo {
     # y1 = demand1 ; x1 = desired_temp1 ; y2 = demand2 ; x2 = desired_temp2
     $demand = $demand1 + ($weighted_temp - $desired_temp1) * ($demand2 - $demand1)/($desired_temp2 - $desired_temp1);
   }
-  printf "demand(%0.2f)", $demand;
+  printf "demand(%0.2f)", $demand if $print_stats;
   $demand = int($static_speed_low + $demand/100*($static_speed_high-$static_speed_low));
   if ($demand>255) {
     $demand=255;
   }
-  printf " -> %i\n", $demand;
+  printf " -> %i\n", $demand if $print_stats;
   # ramp down the fans quickly upon lack of demand, don't ramp them up
   # to tiny spikes of 1 fan unit.  FIXME: But should implement long
   # term smoothing of +/- 1 fan unit
@@ -202,12 +204,12 @@ while () {
   #put differnt offsets on them - possibly as easily as adding "10" to
   #hddtemp (but need to work out how to keep log output sane)
 
-  print "\n";
+  print "\n" if $print_stats;
 
-  print "cputemps=", join (" ; ", @cputemps), "\n";
-  print "coretemps=", join (" ; ", @coretemps), "\n";
-  print "ambient_ipmitemps=", join (" ; ", @ambient_ipmitemps), "\n";
-  print "hddtemps=", join (" ; ", @hddtemps), "\n";
+  print "cputemps=", join (" ; ", @cputemps), "\n" if $print_stats;
+  print "coretemps=", join (" ; ", @coretemps), "\n" if $print_stats;
+  print "ambient_ipmitemps=", join (" ; ", @ambient_ipmitemps), "\n" if $print_stats;
+  print "hddtemps=", join (" ; ", @hddtemps), "\n" if $print_stats;
 
   $ambient_temp = average(@ambient_ipmitemps);
   # FIXME: hysteresis
@@ -224,6 +226,7 @@ while () {
     }
   }
 
+  $print_stats = 0;
   # every 20 minutes (enough to establish spin-down), invalidate the
   # cache of the slowly changing hdd temperatures to allow them to be
   # refreshed
@@ -240,6 +243,7 @@ while () {
                            # make sure we set it appropriately once
                            # per minute
     $last_reset_ambient_ipmitemps=time;
+    $print_stats = 1;
   }
   sleep 3;
 }
