@@ -48,7 +48,7 @@ sub is_num {
   if ( $val =~ /^[-+]?(\d*\.?\d+|\d+\.?\d*)+$/ ) {
     return 1;
   }
-  print "is_num($val)=0\n" if !$quiet;
+  print "is_num($val)=0\n"; # should probably warn about failures to parse values, but if you don't care about a particular error, perhaps add this clause: if !$quiet;
   return 0;
 }
 
