@@ -42,6 +42,15 @@ my $lastfan;
 
 my $print_stats = 1;
 
+sub is_num {
+  my ($val) = @_;
+  if ( $val =~ /^[-+]?(\d*\.?\d+|\d+\.?\d*)+$/ ) {
+    return 1;
+  }
+  print "is_num($val)=0\n" if !$quiet;
+  return 0;
+}
+
 # returns undef if there are no inputs, and ignores inputs that are
 # undef
 sub average {
@@ -50,7 +59,7 @@ sub average {
   my $div = 0;
   my $tot = 0;
   foreach my $v (@v) {
-    if (defined $v) {
+    if (defined $v && is_num($v)) {
       $tot += $v;
       $div++;
     }
