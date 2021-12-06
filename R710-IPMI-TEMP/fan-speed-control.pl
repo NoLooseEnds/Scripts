@@ -40,7 +40,8 @@ my @cputemps=();
 my $current_mode;
 my $lastfan;
 
-my $print_stats = 1;
+my $quiet=0;          # whether to print stats at all
+my $print_stats = 1;  # whether to print stats this run
 
 sub is_num {
   my ($val) = @_;
@@ -182,6 +183,11 @@ END {
   $? = $exit;
 }
 
+if (defined $ARGV[0] && $ARGV[0] eq "-q") {
+  $quiet=1;
+  $print_stats=0;
+}
+
 my $last_reset_hddtemps=time;
 my $last_reset_ambient_ipmitemps=time;
 my $ambient_temp=20;
@@ -252,7 +258,7 @@ while () {
                            # make sure we set it appropriately once
                            # per minute
     $last_reset_ambient_ipmitemps=time;
-    $print_stats = 1;
+    $print_stats = 1 if !$quiet;
   }
   sleep 3;
 }
