@@ -196,8 +196,8 @@ while () {
     # could just be a simple pipe, but hddtemp has a strong posibility
     # to be stuck in a D state, and hold STDERR open despite a kill
     # -9, so instead just send it to a tempfile, and read from that tempfile
-    system("timeout -k 1 20 hddtemp /dev/sd? | grep -v 255 > $tempfilename");
-    @hddtemps=`grep [0-9] < $tempfilename`;
+    system("timeout -k 1 20 hddtemp /dev/sd? > $tempfilename");
+    @hddtemps=`cat < $tempfilename`;
   }
   if (!@ambient_ipmitemps) {
     @ambient_ipmitemps=`timeout -k 1 20 ipmitool sdr type temperature | grep "$ipmi_inlet_sensorname" | grep [0-9] || echo " | $ambient_temp degrees C"` # ipmitool often fails - just keep using the previous result til it succeeds
@@ -205,16 +205,24 @@ while () {
   @coretemps=`timeout -k 1 20 sensors | grep [0-9]`;
   @cputemps=grep {/^Package id/} @coretemps;
   @coretemps=grep {/^Core/} @coretemps;
+  # filter in numbers only and remove all extraneous output, and some
+  # devices permanently return a *temperature* of 255, so filter them
+  # out too.
+  @hddtemps=grep {/[0-9]/ && !/255/} @hddtemps;
 
   chomp @cputemps;
   chomp @coretemps;
   chomp @ambient_ipmitemps;
   chomp @hddtemps;
 
-  @cputemps = apply { s/.*:  *([^ ]*)[.°]C.*/$1/ } @cputemps;
-  @coretemps = apply { s/.*:  *([^ ]*)[.°]C.*/$1/ } @coretemps;
+  # apply from List::MoreUtils
+
+  # "..?C" refers to single octet ascii degree symbol that old
+  # versions used to output, and 2 octet unicode degree symbol
+  @cputemps = apply { s/.*:  *([-+0-9.]+)..?C\b.*/$1/ } @cputemps;
+  @coretemps = apply { s/.*:  *([-+0-9.]+)..?C\b.*/$1/ } @coretemps;
   @ambient_ipmitemps = apply { s/.*\| ([^ ]*) degrees C.*/$1/ } @ambient_ipmitemps;
-  @hddtemps = apply { s/.*:  *([^ ]*)[.°]C.*/$1/ } @hddtemps;
+  @hddtemps = apply { s/.*:  *([-+0-9.]+)..?C\b.*/$1/ } @hddtemps;
   #FIXME: it is more important to keep hdds cool than CPUs.  We should
   #put differnt offsets on them - possibly as easily as adding "10" to
   #hddtemp (but need to work out how to keep log output sane)
