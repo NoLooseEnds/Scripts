@@ -211,10 +211,10 @@ while () {
   chomp @ambient_ipmitemps;
   chomp @hddtemps;
 
-  @cputemps = apply { s/.*:  *([^ ]*).C.*/$1/ } @cputemps;
-  @coretemps = apply { s/.*:  *([^ ]*).C.*/$1/ } @coretemps;
+  @cputemps = apply { s/.*:  *([^ ]*)[.°]C.*/$1/ } @cputemps;
+  @coretemps = apply { s/.*:  *([^ ]*)[.°]C.*/$1/ } @coretemps;
   @ambient_ipmitemps = apply { s/.*\| ([^ ]*) degrees C.*/$1/ } @ambient_ipmitemps;
-  @hddtemps = apply { s/.*:  *([^ ]*).C.*/$1/ } @hddtemps;
+  @hddtemps = apply { s/.*:  *([^ ]*)[.°]C.*/$1/ } @hddtemps;
   #FIXME: it is more important to keep hdds cool than CPUs.  We should
   #put differnt offsets on them - possibly as easily as adding "10" to
   #hddtemp (but need to work out how to keep log output sane)
