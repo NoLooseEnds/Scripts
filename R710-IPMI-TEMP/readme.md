@@ -1,19 +1,25 @@
 # fan speed controller for dell R710, R520 etc
 
-Dells don't like having third party cards installed, and ramp up the
-fan speed to jetliner taking off.  But you can override this, servoing the fans to follow the temperature demand of the various components (disks via hddtemp, CPUs and GPUs via sensors, ambient temperature via ipmitool).
+Dells don't like having third party cards installed, and defaults to
+ramping up the fan speed to "jetliner taking off" mode when third
+party cards or non-Dell disks are added in.  But you can override
+this, servoing the fans to follow the temperature demand of the
+various components (disks via hddtemp, CPUs and GPUs via sensors,
+ambient temperature via ipmitool).
 
-This speed controller uses ipmi raw commands that seem to be similar
-across a wide range of dell server generations (google searches for
-`ipmitool raw 0x30 0x30 0x01 0x00` show it works for R710, R730, T130,
-and I run this on my R520
+This repo is forked from NoLooseEnds/Scripts, which contained
+R710-IPMI-TEMP.  I have extended it to work on my R520, being a bit
+smarter regarding the CPU and HDD temps instead of just caring about
+the ambient temperature.  It uses ipmi raw commands that seem to be
+similar across a wide range of dell server generations (google
+searches for `ipmitool raw 0x30 0x30 0x01 0x00` show it works for
+R710, R730, R730xd, T130, and I run this on my R520.
 
 It's got a signal handler so it defaults to default behaviour when
-killed by SIGINT/SIGTERM.
+killed by SIGINT/SIGTERM/other bugs.
 
 I run it on my proxmox hypervisor directly, hence not needing any ipmi
-passwords.  I will start and stop it through proxmox's systemd system
-once I have it firmly debugged.
+passwords.  I start and stop it through proxmox's systemd system.
 
 I wrote it the night before Australia's hottest December day on record
 (hey we like our coal fondling prime-ministers).  It seems to be
