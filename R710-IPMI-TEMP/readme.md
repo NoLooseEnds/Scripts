@@ -1,14 +1,42 @@
 # fan speed controller for dell R710, R520 etc
 
 Dells don't like having third party cards installed, and ramp up the
-fan speed to jetliner taking off.  But you can override this.
+fan speed to jetliner taking off.  But you can override this, servoing the fans to follow the temperature demand of the various components (disks via hddtemp, CPUs and GPUs via sensors, ambient temperature via ipmitool).
 
 This speed controller uses ipmi raw commands that seem to be similar
 across a wide range of dell server generations (google searches for
 `ipmitool raw 0x30 0x30 0x01 0x00` show it works for R710, R730, T130,
 and I run this on my R520
 
-This script monitoring the ambient air temperature (you will likely
+It's got a signal handler so it defaults to default behaviour when
+killed by SIGINT/SIGTERM.
+
+I run it on my proxmox hypervisor directly, hence not needing any ipmi
+passwords.  I will start and stop it through proxmox's systemd system
+once I have it firmly debugged.
+
+I wrote it the night before Australia's hottest December day on record
+(hey we like our coal fondling prime-ministers).  It seems to be
+coping so far now that it has reached that predicted peak (I don't
+believe it's only 26 in my un-air conditioned study).
+
+# installation (debian/proxmox)
+
+sudo apt install liblist-moreutils-perl hddtemp lm-sensors ipmitool
+
+sudo cp -p fan-speed-control.pl /usr/local/bin
+sudo cp -p fan-speed-control.service /etc/systemd/system/fan-speed-control.service
+sudo systemctl daemon-reload
+sudo systemctl --now enable fan-speed-control.service
+
+[Reddit discussion](https://www.reddit.com/r/homelab/comments/ed6w7y)
+
+# Possibly required modifications/tuning
+For the r710, you'll probably need to modify the regexps looking for "Inlet Temp" - you might need to anchor the text since it's only using grep to filter the results.
+
+You might want to modify setpoints and thresholds. I found it simple to test by starting up a whole bunch of busy loops on each of the 32 cores in my machine, heating each core up to 60degC and making sure the fans ramped up high.
+
+This script monitors the ambient air temperature (you will likely
 need to modify the $ipmi_inlet_sensorname variable to find the correct
 sensor), the hdd temperatures, the core and socket temperatures
 (weighted so one core shooting up if all the others are still cold -
@@ -22,17 +50,7 @@ air temperature threshold of 32degrees where it gives up and delegates
 control back to the firmware.  Don't run your bedroom IT closet at 32
 degrees yeah?
 
-It's got a signal handler so it defaults to default behaviour when
-killed by SIGINT/SIGTERM.
-
-I run it on my proxmox hypervisor directly, hence not needing any ipmi
-passwords.  I will start and stop it through proxmox's systemd system
-once I have it firmly debugged.
-
-I wrote it the night before Australia's hottest December day on record
-(hey we like our coal fondling prime-ministers).  It seems to be
-coping so far now that it has reached that predicted peak (I don't
-believe it's only 26 in my un-air conditioned study).
+# Results
 
 ![Socket and ambient temperature on 20Dec2019](ipmi_temp-pinpoint=1576762993,1576823788.png)
 ![Hdd temp](hddtemp_smartctl-pinpoint=1576762993,1576823788.png)
