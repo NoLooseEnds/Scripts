@@ -32,6 +32,11 @@ my $hysteresis    = 2;     # don't ramp up velocity unless demand
 # check inlet temp every minute, hddtemp every minute (but FIXME:
 # ensure doesn't spinup spundown disks), and sensors every few seconds
 
+# background information:
+# https://www.dell.com/community/PowerEdge-Hardware-General/T130-Fan-Speed-Algorithm/td-p/5052692
+# https://serverfault.com/questions/715387/how-do-i-stop-dell-r730xd-fans-from-going-full-speed-when-broadcom-qlogic-netxtr/733064#733064
+# could monitor H710 temperature with sudo env /opt/MegaRAID/MegaCli/MegaCli64 -AdpAllInfo -aALL | grep -i temperature
+
 my @ambient_ipmitemps=();
 my @hddtemps=();
 my @coretemps=();
