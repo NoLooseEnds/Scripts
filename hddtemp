@@ -1,0 +1,38 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+# much of this stolen from /etc/munin/plugins/hddtemp_smartctl
+
+$ENV{PATH}="$ENV{PATH}:/usr/sbin:/sbin";
+
+foreach my $drive (@ARGV) {
+  my $sense=`sdparm --command=sense $drive 2>/dev/null`;
+  if (!($sense =~ /Standby/)) {
+    my $output=`smartctl -A -i --nocheck=standby $drive`;
+
+    my $model="";
+    if ($output =~ /(Model Number|Device Model):\s*(.*)/) {
+      $model="$2: ";
+    }
+    if ($output =~ /Current Drive Temperature:\s*(\d+)/) {
+      print "$drive: $model$1°C\n";
+    } elsif ($output =~ /^(194 Temperature_(Celsius|Internal).*)/m) {
+      my @F = split /\s+/, $1;
+      print "$drive: $model$F[9]°C\n";
+    } elsif ($output =~ /^(231 Temperature_Celsius.*)/m) {
+      my @F = split ' ', $1;
+      print "$drive: $model$F[9]°C\n";
+    } elsif ($output =~ /^(190 (Airflow_Temperature_Cel|Temperature_Case).*)/m) {
+      my @F = split ' ', $1;
+      print "$drive: $model$F[9]°C\n";
+    } elsif ($output =~ /Temperature:\s*(\d+) Celsius/) {
+      print "$drive: $model$1°C\n";
+    } else {
+      print "$drive: Smart not available\n";
+    }
+  } else {
+    print "$drive: Sleeping.  Temperature not available\n";
+  };
+}
