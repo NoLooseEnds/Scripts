@@ -28,6 +28,11 @@ believe it's only 26 in my un-air conditioned study).
 
 # installation (debian/proxmox)
 
+It's in my [ansible
+module](https://github.com/spacelama/ansible-initial-server-setup/tree/master/roles/dell_server)
+(which you won't want to use in full, but you can certainly adapt),
+but manual installation is:
+
 ```
 sudo apt install liblist-moreutils-perl lm-sensors ipmitool
 # I also use my own hddtemp, since debian's hddtemp itself is unmaintained and can't deal with SAS drives and often spins up drives that are spun down:
