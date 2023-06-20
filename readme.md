@@ -38,8 +38,8 @@ sudo apt install liblist-moreutils-perl lm-sensors ipmitool
 # I also use my own hddtemp, since debian's hddtemp itself is unmaintained and can't deal with SAS drives and often spins up drives that are spun down:
 sudo apt remove hddtemp
 
-sudo cp -p fan-speed-control.pl /usr/local/bin
-sudo cp -p hddtemp /usr/local/bin
+sudo cp -p fan-speed-control.pl /usr/local/bin && sudo chmod 755 /usr/local/bin/fan-speed-control.pl
+sudo cp -p hddtemp /usr/local/bin && sudo chmod 755 /usr/local/bin/hddtemp
 sudo cp -p fan-speed-control.service /etc/systemd/system/fan-speed-control.service
 sudo systemctl daemon-reload
 sudo systemctl --now enable fan-speed-control.service
