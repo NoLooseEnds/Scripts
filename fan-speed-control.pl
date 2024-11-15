@@ -121,40 +121,43 @@ sub set_fans_servo {
                                   average(@cputemps), average(@coretemps), average(@hddtemps)),
                           average(@hddtemps));
 
-  if (!defined $weighted_temp or $weighted_temp == 0) {
+  if ((!defined $weighted_temp) or ($weighted_temp == 0)) {
     print "Error reading all temperatures! Fallback to idrac control\n";
     set_fans_default();
     return;
   }
   print "weighted_temp = $weighted_temp ; ambient_temp $ambient_temp\n" if $print_stats;
 
-  if (!defined $current_mode or $current_mode ne "set") {
-    $current_mode="set";
+  if ((!defined $current_mode) or ($current_mode ne "set")) {
     print "--> disable dynamic fan control\n";
     system("ipmitool raw 0x30 0x30 0x01 0x00") == 0 or return 0;
     # if this fails, want to return telling caller not to think weve
     # made a change
+    $current_mode="set";
   }
 
   # FIXME: probably want to take into account ambient temperature - if
   # the difference between weighted_temp and ambient_temp is small
   # because ambient_temp is large, then less need to run the fans
   # because there's still low power demands
-  my $demand = 0; # want demand to be a reading from 0-100% of
-                  # $static_speed_low - $static_speed_high
+  my $demand = 0; # sort of starts off with a range roughly 0-255,
+                  # which we multiply later to be ranged roughly
+                  # between 0-100% of
+                  # ($static_speed_low - $static_speed_high)
   if ($weighted_temp > $base_temp and
       $weighted_temp < $desired_temp1) {
     # slope m = (y2-y1)/(x2-x1)
     # y - y1 = (x-x1)(y2-y1)/(x2-x1)
     # y1 = 0 ; x1 = base_temp ; y2 = demand1 ; x2 = desired_temp1
     # x = weighted_temp
-    $demand = 0 + ($weighted_temp - $base_temp) * ($demand1 - 0)/($desired_temp1 - $base_temp);
-  } elsif ($weighted_temp >= $desired_temp2) {
-    # y1 = demand1 ; x1 = desired_temp1 ; y2 = demand2 ; x2 = desired_temp2
-    $demand = $demand2 + ($weighted_temp - $desired_temp2) * ($demand3 - $demand2)/($desired_temp3 - $desired_temp2);
-  } elsif ($weighted_temp >= $desired_temp1) {
+    $demand = 0        + ($weighted_temp - $base_temp    ) * ($demand1 - 0       )/($desired_temp1 - $base_temp    );
+  } elsif (($weighted_temp >= $desired_temp1) or ($weighted_temp < $desired_temp2)) {
     # y1 = demand1 ; x1 = desired_temp1 ; y2 = demand2 ; x2 = desired_temp2
     $demand = $demand1 + ($weighted_temp - $desired_temp1) * ($demand2 - $demand1)/($desired_temp2 - $desired_temp1);
+  } elsif ($weighted_temp >= $desired_temp2) {
+    # y1 = demand2 ; x1 = desired_temp2 ; y2 = demand3 ; x2 = desired_temp3
+    # demand will increase above $demand3 for temps above $desired_temp3, linearly, until we cap it below
+    $demand = $demand2 + ($weighted_temp - $desired_temp2) * ($demand3 - $demand2)/($desired_temp3 - $desired_temp2);
   }
   printf "demand(%0.2f)", $demand if $print_stats;
   $demand = int($static_speed_low + $demand/100*($static_speed_high-$static_speed_low));
