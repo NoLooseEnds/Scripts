@@ -1,19 +1,25 @@
 # fan speed controller for dell R710, R520, R730xd etc
 
 Dells don't like having third party cards installed, and defaults to
-ramping up the fan speed to "jetliner taking off" mode when third
-party cards or non-Dell disks are added in.  But you can override
-this, servoing the fans to follow the temperature demand of the
-various components (disks via hddtemp, CPUs and GPUs via sensors,
-ambient temperature via ipmitool).
+ramping up the fan speed to "jetliner taking off" mode when some third
+party cards or non-Dell disks are added in.  You can override this in
+the BIOS with various settings, and iDrac8 is better than it used to
+be.  But for more flexibility or if you've added a particularly hot
+10gbe card and want to cool it more effectively, you can override all
+of this with this repo.  Here, we servo the fans to follow the
+temperature demand of the various components (disks via hddtemp, CPUs
+and GPUs via sensors, ambient temperature via ipmitool).  Tuning is
+alas done entirely by you modifying variable of devices to monitor in
+code, alas.
 
 This repo is forked from NoLooseEnds/Scripts, which contained
-R710-IPMI-TEMP.  I have extended it to work on both my R520 and R730xd (unchanged despite hardware raid card, GPU etc), being a bit
-smarter regarding the CPU and HDD temps instead of just caring about
-the ambient temperature.  It uses ipmi raw commands that seem to be
-similar across a wide range of dell server generations (google
+R710-IPMI-TEMP.  I have extended it to work on both my R520 and R730xd
+(unchanged on the latter despite hardware raid card, GPU etc), being a
+bit smarter regarding the CPU and HDD temps instead of just caring
+about the ambient temperature.  It uses ipmi raw commands that seem to
+be similar across a wide range of dell server generations (google
 searches for `ipmitool raw 0x30 0x30 0x01 0x00` show it works for
-R710, R730, R730xd, T130, and I run this on my R520.
+R710, R730, R730xd, T130, and I run this on my R520 and R730xd).
 
 It's got a signal handler so it defaults to default behaviour when
 killed by SIGINT/SIGTERM/other bugs.
