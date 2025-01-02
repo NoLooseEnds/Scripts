@@ -54,9 +54,11 @@ sudo systemctl --now enable fan-speed-control.service
 [Reddit discussion](https://www.reddit.com/r/homelab/comments/ed6w7y)
 
 # Possibly required modifications/tuning
-The code's configuration is in the script, unfortunately.  It's also configured for my *specific* R730XD's in my specific climate with my specific drives and tolerance for noise.  This code comes with no warranty - you are expected to both tune it, and monitor for possible failures or things being too hot.  For the R710, you'll probably need to modify the regexps looking for "Inlet Temp" - you might need to anchor the text since it's only using grep to filter the results.
+The code's configuration is in the script, unfortunately.  It's also configured for my *specific* R730XD's in my specific climate with my specific drives and tolerance for noise.  This code comes with no warranty - you are expected to both tune it, and monitor for possible failures or things being too hot.  For the R710, you'll probably need to modify the regexps looking for "Inlet Temp" to whatever's your version of ambient air temperature - you might need to anchor the text since it's only using grep to filter the results.
 
-You might want to modify setpoints and thresholds. I found it simple to test by starting up a whole bunch of busy loops on each of the 32 cores in my machine, heating each core up to 60degC and making sure the fans ramped up high:
+You might want to modify setpoints and thresholds.  $demand isn't actually a percentage. That code is a mess, $static_speed_high is more or less arbitrary - the initial ramps are chosen to sort of scale from an input of 0-255 and map to 0x02 to 0x12 ($static_speed_low to $static_speed_high), which is bloody loud and fast on my machines, but are allowed to continue linearly even further all the way to 255 if necessary if the temperature ramps up to 6 million degrees.
+
+I found it simple to test by starting up a whole bunch of busy loops on each of the 32 cores in my machine, heating each core up to 60degC and making sure the fans ramped up high:
 ```
 >  grep processor /proc/cpuinfo | wc -l
 64
@@ -72,16 +74,31 @@ You might want to modify setpoints and thresholds. I found it simple to test by 
 Monitor in another terminal with eg.,:
 ```
 > sillysu journalctl -f | grep fan.speed.control
-Jan 03 02:43:56 pve1 fan-speed-control.pl[3648151]: demand(81.28) -> 15
+...
+Jan 03 02:58:20 pve1 fan-speed-control.pl[3648151]: --> disable dynamic fan control
+Jan 03 02:58:23 pve1 fan-speed-control.pl[3648151]: demand(74.08) -> 13
+Jan 03 02:58:23 pve1 fan-speed-control.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xc
+Jan 03 02:58:26 pve1 fan-speed-control.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xb
+Jan 03 02:58:41 pve1 fan-speed-control.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xe
+Jan 03 02:58:44 pve1 fan-speed-control.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xd
+Jan 03 02:59:12 pve1 fan-speed-control.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0x10
+Jan 03 02:59:15 pve1 fan-speed-control.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xf
+Jan 03 02:59:23 pve1 fan-speed-control.pl[3648151]: cputemps=+55.0
+Jan 03 02:59:23 pve1 fan-speed-control.pl[3648151]: coretemps=+52.0 ; +51.0 ; +51.0 ; +50.0
+Jan 03 02:59:23 pve1 fan-speed-control.pl[3648151]: ambient_ipmitemps=23
+Jan 03 02:59:23 pve1 fan-speed-control.pl[3648151]: hddtemps=31 ; 38 ; 28 ; 32 ; 30 ; 42 ; 41 ; 40 ; 44 ; 43
+Jan 03 02:59:23 pve1 fan-speed-control.pl[3648151]: weighted_temp = 47.63 ; ambient_temp 23.00
+Jan 03 02:59:23 pve1 fan-speed-control.pl[3648151]: --> disable dynamic fan control
+...
 > sensors
 > sudo hddtemp /dev/sd?
 ```
-Whatever.
+Whatever.  Note that hddtemps and inlet (ambient air *intake*, which measures your room temperature) temperature are polled less frequently than coretemps, given they don't change as rapidly and are more expensive to read.  
 
 This script monitors the ambient air temperature (you will likely
 need to modify the $ipmi_inlet_sensorname variable to find the correct
 sensor), the hdd temperatures, the core and socket temperatures
-(weighted so one core shooting up if all the others are still cold -
+(weighted so one core shooting up if all the others are still cold doesn't suddenly convert your machine into an airfreighter taking off -
 let the heatsink do its job).
 
 It uses setpoints and temperature ranges you can tune to your heart's
@@ -89,7 +106,10 @@ content.  I use it to keep the fans low but increasing to a soft
 volume up to 40 degrees, ramp it up quickly to 50degrees, then very
 quickly towards full speed much beyond that.  It also has an ambient
 air temperature threshold of 32degrees where it gives up and delegates
-control back to the firmware.  Don't run your bedroom IT closet at 32
+control back to the firmware.  The ambient temperature reading doesn't
+normally affect how hard your fans have to spin, and is only used to
+fallback to iDRAC mode so that your machine doesn't explode if eg., you've 
+had an air-conditioning failure.  Don't run your bedroom IT closet at 32
 degrees yeah?
 
 # Results
