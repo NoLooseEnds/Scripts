@@ -54,9 +54,29 @@ sudo systemctl --now enable fan-speed-control.service
 [Reddit discussion](https://www.reddit.com/r/homelab/comments/ed6w7y)
 
 # Possibly required modifications/tuning
-For the r710, you'll probably need to modify the regexps looking for "Inlet Temp" - you might need to anchor the text since it's only using grep to filter the results.
+The code's configuration is in the script, unfortunately.  It's also configured for my *specific* R730XD's in my specific climate with my specific drives and tolerance for noise.  This code comes with no warranty - you are expected to both tune it, and monitor for possible failures or things being too hot.  For the R710, you'll probably need to modify the regexps looking for "Inlet Temp" - you might need to anchor the text since it's only using grep to filter the results.
 
-You might want to modify setpoints and thresholds. I found it simple to test by starting up a whole bunch of busy loops on each of the 32 cores in my machine, heating each core up to 60degC and making sure the fans ramped up high.
+You might want to modify setpoints and thresholds. I found it simple to test by starting up a whole bunch of busy loops on each of the 32 cores in my machine, heating each core up to 60degC and making sure the fans ramped up high:
+```
+>  grep processor /proc/cpuinfo | wc -l
+64
+> for i in `seq 1 64` ; do while : ; do : ; done & done
+# arrrrrghhhh, hot, loud!
+# Wait 5 minutes, monitoring as going.  Wait 30 minutes.  Take out loan for
+# power company.  Cool, nothing emitted the magic smoke except my wallet.
+# Better kill the jobs (has to be done from the same terminal, so
+# hopefully your session hasn't crashed):
+> for i in `seq 1 64` ; do kill %$i ; done
+```
+
+Monitor in another terminal with eg.,:
+```
+> sillysu journalctl -f | grep fan.speed.control
+Jan 03 02:43:56 pve1 fan-speed-control.pl[3648151]: demand(81.28) -> 15
+> sensors
+> sudo hddtemp /dev/sd?
+```
+Whatever.
 
 This script monitors the ambient air temperature (you will likely
 need to modify the $ipmi_inlet_sensorname variable to find the correct
@@ -83,13 +103,16 @@ degrees yeah?
 
 *****
 
-# Howto: Manually setting the fan speed of the Dell R610/R710
+# Historical Howto: Fallback and manually testing setting the fan speed of the Dell R610/R710
+
+Historical notes and stuff it's partially relying on behind the scenes, and if you have problems with the code, you may find yourself digging through this:
 
 1. Enable IPMI in iDrac
 2. Install ipmitool on linux, win or mac os
 3. Run the following command to issue IPMI commands: 
 `ipmitool -I lanplus -H <iDracip> -U root -P <rootpw> <command>`
 
+(we don't use lanplus though)
 
 **Enable manual/static fan speed:**
 
