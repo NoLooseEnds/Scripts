@@ -93,7 +93,10 @@ Jan 03 02:59:23 pve1 fan-speed-control.pl[3648151]: --> disable dynamic fan cont
 > sensors
 > sudo hddtemp /dev/sd?
 ```
-Whatever.  Note that hddtemps and inlet (ambient air *intake*, which measures your room temperature) temperature are polled less frequently than coretemps, given they don't change as rapidly and are more expensive to read.  
+Whatever.  Note that hddtemps and inlet (ambient air *intake*, which
+measures your room temperature) temperature are polled less frequently
+than coretemps, given they don't change as rapidly and are more expensive
+to read.
 
 This script monitors the ambient air temperature (you will likely
 need to modify the $ipmi_inlet_sensorname variable to find the correct
@@ -108,7 +111,7 @@ quickly towards full speed much beyond that.  It also has an ambient
 air temperature threshold of 32degrees where it gives up and delegates
 control back to the firmware.  The ambient temperature reading doesn't
 normally affect how hard your fans have to spin, and is only used to
-fallback to iDRAC mode so that your machine doesn't explode if eg., you've 
+fallback to iDRAC mode so that your machine doesn't explode if eg., you've
 had an air-conditioning failure.  Don't run your bedroom IT closet at 32
 degrees yeah?
 
@@ -129,7 +132,7 @@ Historical notes and stuff it's partially relying on behind the scenes, and if y
 
 1. Enable IPMI in iDrac
 2. Install ipmitool on linux, win or mac os
-3. Run the following command to issue IPMI commands: 
+3. Run the following command to issue IPMI commands:
 `ipmitool -I lanplus -H <iDracip> -U root -P <rootpw> <command>`
 
 (we don't use lanplus though)
@@ -175,4 +178,4 @@ TLDR; I take _NO_ responsibility if you mess up anything.
 
 *****
 
-All of this was inspired by [this Reddit post](https://www.reddit.com/r/homelab/comments/72qust/r510_noise/dnkofsv/) by /u/whitekidney 
+All of this was inspired by [this Reddit post](https://www.reddit.com/r/homelab/comments/72qust/r510_noise/dnkofsv/) by /u/whitekidney
