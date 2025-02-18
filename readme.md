@@ -12,14 +12,16 @@ and GPUs via sensors, ambient temperature via ipmitool).  Tuning is
 alas done entirely by you modifying variable of devices to monitor in
 code, alas.
 
-This repo is forked from NoLooseEnds/Scripts, which contained
-R710-IPMI-TEMP.  I have extended it to work on both my R520 and R730xd
-(unchanged on the latter despite hardware raid card, GPU etc), being a
-bit smarter regarding the CPU and HDD temps instead of just caring
-about the ambient temperature.  It uses ipmi raw commands that seem to
-be similar across a wide range of dell server generations (google
-searches for `ipmitool raw 0x30 0x30 0x01 0x00` show it works for
-R710, R730, R730xd, T130, and I run this on my R520 and R730xd).
+This repo is forked from
+[NoLooseEnds/Scripts](https://github.com/NoLooseEnds/Scripts),
+which contained R710-IPMI-TEMP.  I have extended it to work on both my
+R520 and R730xd (unchanged on the latter despite hardware raid card,
+GPU etc), being a bit smarter regarding the CPU and HDD temps instead
+of just caring about the ambient temperature.  It uses ipmi raw
+commands that seem to be similar across a wide range of dell server
+generations (google searches for `ipmitool raw 0x30 0x30 0x01 0x00`
+show it works for R710, R730, R730xd, T130, and I run this on my R520
+and R730xd).
 
 It's got a signal handler so it defaults to default behaviour when
 killed by SIGINT/SIGTERM/other bugs.
@@ -122,6 +124,24 @@ degrees yeah?
 ![Core temp](sensors_temp-pinpoint=1576762993,1576823788.png)
 ![Resultant Fan speed](ipmi_fans-pinpoint=1576762993,1576823788.png)
 
+# Other references
+
+This repo is forked from
+[NoLooseEnds/Scripts](https://github.com/NoLooseEnds/Scripts/tree/master/R710-IPMI-TEMP),
+extended to drive demand based on device temperature excesses.
+
+Of course, for your Poweredge server of a different generation, with
+different cards fitted, you may have more temperature sensors you may
+want to monitor.  There's some additional sensors you may want to look
+at via [commands documented
+here](https://www.spxlabs.com/blog/2019/3/16/silence-your-dell-poweredge-server).
+
+There are completely separate implementations as well.  Here's
+someone's [docker container that fixes the speed until core
+temperatures are
+breached](https://github.com/tigerblue77/Dell_iDRAC_fan_controller_Docker),
+or [this code which implements distinct speed levels and
+hysteresis](https://github.com/nabijaczleweli/tarta-crust/blob/master/r710_fan_controller/usr/local/libexec/r710_fan_controller.sh).
 
 
 *****
