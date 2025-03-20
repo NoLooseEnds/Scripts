@@ -184,7 +184,7 @@ sub set_fans_servo {
   return 1;
 }
 
-my ($tempfh, $tempfilename) = tempfile("fan-speed-control.XXXXX", TMPDIR => 1);
+my ($tempfh, $tempfilename) = tempfile("poweredge-fand.XXXXX", TMPDIR => 1);
 
 $SIG{TERM} = $SIG{HUP} = $SIG{INT} = sub { my $signame = shift ; $SIG{$signame} = 'DEFAULT' ; print "Resetting fans back to default\n"; set_fans_default ; kill $signame, $$ };
 END {

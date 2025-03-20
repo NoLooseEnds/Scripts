@@ -2,10 +2,10 @@
 Description=Dell Poweredge Fan Control Daemon
 
 [Service]
-ExecStart=/usr/local/bin/fan-speed-control.pl
+ExecStart=/usr/local/bin/poweredge-fand.pl
 Restart=on-failure
 Type=simple
 
 [Install]
-Alias=fan-speed-control.service
+Alias=poweredge-fand.service
 WantedBy=multi-user.target

@@ -1,4 +1,4 @@
-# fan speed controller for dell R710, R520, R730xd etc
+# fan speed controller for Dell Poweredge R710, R520, R730xd etc
 
 Dells don't like having third party cards installed, and defaults to
 ramping up the fan speed to "jetliner taking off" mode when some third
@@ -46,11 +46,11 @@ sudo apt install liblist-moreutils-perl lm-sensors ipmitool
 # I also use my own hddtemp, since debian's hddtemp itself is unmaintained and can't deal with SAS drives and often spins up drives that are spun down:
 sudo apt remove hddtemp
 
-sudo cp -p fan-speed-control.pl /usr/local/bin && sudo chmod 755 /usr/local/bin/fan-speed-control.pl
+sudo cp -p poweredge-fand.pl /usr/local/bin && sudo chmod 755 /usr/local/bin/poweredge-fand.pl
 sudo cp -p hddtemp /usr/local/bin && sudo chmod 755 /usr/local/bin/hddtemp
-sudo cp -p fan-speed-control.service /etc/systemd/system/fan-speed-control.service
+sudo cp -p poweredge-fand.service /etc/systemd/system/poweredge-fand.service
 sudo systemctl daemon-reload
-sudo systemctl --now enable fan-speed-control.service
+sudo systemctl --now enable poweredge-fand.service
 ```
 
 [Reddit discussion](https://www.reddit.com/r/homelab/comments/ed6w7y)
@@ -75,22 +75,22 @@ I found it simple to test by starting up a whole bunch of busy loops on each of 
 
 Monitor in another terminal with eg.,:
 ```
-> sillysu journalctl -f | grep fan.speed.control
+> sudo journalctl -n1000 -xfu poweredge-fand
 ...
-Jan 03 02:58:20 pve1 fan-speed-control.pl[3648151]: --> disable dynamic fan control
-Jan 03 02:58:23 pve1 fan-speed-control.pl[3648151]: demand(74.08) -> 13
-Jan 03 02:58:23 pve1 fan-speed-control.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xc
-Jan 03 02:58:26 pve1 fan-speed-control.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xb
-Jan 03 02:58:41 pve1 fan-speed-control.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xe
-Jan 03 02:58:44 pve1 fan-speed-control.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xd
-Jan 03 02:59:12 pve1 fan-speed-control.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0x10
-Jan 03 02:59:15 pve1 fan-speed-control.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xf
-Jan 03 02:59:23 pve1 fan-speed-control.pl[3648151]: cputemps=+55.0
-Jan 03 02:59:23 pve1 fan-speed-control.pl[3648151]: coretemps=+52.0 ; +51.0 ; +51.0 ; +50.0
-Jan 03 02:59:23 pve1 fan-speed-control.pl[3648151]: ambient_ipmitemps=23
-Jan 03 02:59:23 pve1 fan-speed-control.pl[3648151]: hddtemps=31 ; 38 ; 28 ; 32 ; 30 ; 42 ; 41 ; 40 ; 44 ; 43
-Jan 03 02:59:23 pve1 fan-speed-control.pl[3648151]: weighted_temp = 47.63 ; ambient_temp 23.00
-Jan 03 02:59:23 pve1 fan-speed-control.pl[3648151]: --> disable dynamic fan control
+Jan 03 02:58:20 pve1 poweredge-fand.pl[3648151]: --> disable dynamic fan control
+Jan 03 02:58:23 pve1 poweredge-fand.pl[3648151]: demand(74.08) -> 13
+Jan 03 02:58:23 pve1 poweredge-fand.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xc
+Jan 03 02:58:26 pve1 poweredge-fand.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xb
+Jan 03 02:58:41 pve1 poweredge-fand.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xe
+Jan 03 02:58:44 pve1 poweredge-fand.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xd
+Jan 03 02:59:12 pve1 poweredge-fand.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0x10
+Jan 03 02:59:15 pve1 poweredge-fand.pl[3648151]: --> ipmitool raw 0x30 0x30 0x02 0xff 0xf
+Jan 03 02:59:23 pve1 poweredge-fand.pl[3648151]: cputemps=+55.0
+Jan 03 02:59:23 pve1 poweredge-fand.pl[3648151]: coretemps=+52.0 ; +51.0 ; +51.0 ; +50.0
+Jan 03 02:59:23 pve1 poweredge-fand.pl[3648151]: ambient_ipmitemps=23
+Jan 03 02:59:23 pve1 poweredge-fand.pl[3648151]: hddtemps=31 ; 38 ; 28 ; 32 ; 30 ; 42 ; 41 ; 40 ; 44 ; 43
+Jan 03 02:59:23 pve1 poweredge-fand.pl[3648151]: weighted_temp = 47.63 ; ambient_temp 23.00
+Jan 03 02:59:23 pve1 poweredge-fand.pl[3648151]: --> disable dynamic fan control
 ...
 > sensors
 > sudo hddtemp /dev/sd?
