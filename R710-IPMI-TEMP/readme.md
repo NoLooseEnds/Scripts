@@ -1,3 +1,17 @@
+# _**Notice:** This script is not maintained any more._ 
+
+**_If you want a more advanced Perl script with more functionality, check out [@spacelama's fork](https://github.com/spacelama/Scripts)._**
+  
+  
+  
+*****
+ 
+*****
+
+*****
+
+**Old README:**
+
 # Safety BASH script
 I made a BASH script to check the temperature, and if it's higher than XX (27 degrees C in my case) it sends a raw command to restore automatic fan control. 
 
@@ -13,13 +27,6 @@ I'm also currently testing out [slacktee.sh](https://github.com/course-hero/slac
 
 
 The Scripts [Reddit thread](https://www.reddit.com/r/homelab/comments/779cha/manual_fan_control_on_r610r710_including_script/)
-
-*****
-
-*ADDED 2019-12-20:*
-If you want a more advanced Perl script with more functionality, check out [@spacelama's fork](https://github.com/spacelama/Scripts).
-
-*****
 
 # Howto: Setting the fan speed of the Dell R610/R710
 
